@@ -1,9 +1,7 @@
 from random import randint
-   
+
 
 class Actor:
-
-    inventory = []
 
     def __init__(self, max_hp, current_hp, id=0, name=""):
         self.id = id
@@ -53,33 +51,6 @@ class Actor:
     def set_name(self, name):
         self.name = name
 
-    def get_inventroy(self):
-        return inventory
-
-    def add_inventory(self, item):
-        self.inventory.append(item)
-
-    def remove_inventory(self, item):
-        self.inventory.remove(item)
-
-    def use_inventory(self, item):
-        self.inventory.pop(item)
-
-
-class LootItem:
-
-    def __init__(self, Item, drop_rate, is_default):
-        self.Item = Item
-        self.drop_rate = drop_rate
-        self.is_default = is_default
-
-
-class QuestRewardItem:
-
-    def __init__(self, Item, quantity):
-        self.Item = Item
-        self.quantity = quantity
-
 
 class Location:
 
@@ -97,20 +68,71 @@ class Item:
         self.name_plural = name_plural
 
 
-class ConsumableItem(Item):
-    
-    def __init__(self, id, name, name_plural, effect):
-        super(ConsumableItem, self).__init__(id, name, name_plural)
-        self.effect = effect
-
-        
 class InventoryItem:
 
     def __init__(self, item, quantity):
         self.item = item
         self.quantity = quantity
 
-        
+    def __str__(self):
+        if self.quantity > 1:
+            return self.item.name_plural + " " + str(self.quantity)
+        elif self.quantity == 1:
+            return self.item.name + " " + str(self.quantity)
+
+    def get_name(self):
+        return self.item.name
+
+
+class Inventory:
+
+    def __init__(self, inventory=[]):
+        self.inventory = inventory
+
+    def __str__(self):
+        out = "\n".join([str(item) for item in self.inventory])
+        return out
+
+    def add(self, item, quantity):
+        item_to_add = InventoryItem(item, quantity)
+        self.inventory.append(item_to_add)
+
+    def remove(self, item):
+        self.inventory.remove(item)
+
+    def get_item(self, item_id):
+        """
+        Checks if a an item is in the inventory.
+
+        :param item_id: ID of the item
+        :return: None or the item from inventory
+        """
+        for item in self.inventory:
+            if item_id == item.item.id:
+                return item
+
+        return None
+
+    def combine_stacks(self):
+        """
+        Loops through inventory list looking for elements with
+        matching names so thier quantities can be combined and
+        the duplicate item can be removed.
+        """
+        for forward in range(0, len(self.inventory) - 1):
+            for backward in range(len(self.inventory), 0, -1):
+                if (self.inventory[backward - 1].quantity is not 0 and
+                        forward != backward -1 and
+                        self.inventory[forward].get_name() ==
+                        self.inventory[backward - 1].get_name()):
+                    quantity = self.inventory[forward].quantity = self.inventory[forward].quantity + self.inventory[backward - 1].quantity
+                    self.inventory[forward].quantity = quantity
+                    self.inventory[backward - 1].quantity = 0
+        for item in self.inventory:
+            if item.quantity == 0:
+                self.inventory.remove(item)
+
+
 class Quest:
 
     reward_items = []
@@ -131,13 +153,27 @@ class Quest:
 
 class Player(Actor):
 
-    quests = []
 
     def __init__(self, max_hp, current_hp, gold, xp, level):
         super(Player, self).__init__(max_hp, current_hp)
         self.gold = gold
         self.xp = xp
         self.level = level
+        self.inventory = Inventory()
+
+    def use_item(self, item_id):
+        """
+        Checks if item_id is in the player's inventory and if so, calls
+        the consume() method of the item.
+
+        :param item_id: ID of item to use
+        """
+        if self.inventory.get_item(item_id) is not None:
+            item = self.inventory.get_item(item_id)
+            item.item.consume(self)
+            self.inventory.remove(item)
+        else:
+            return "You do not posses that item."
 
     def accept_quest(self, quest):
         self.quests.append(quest)
