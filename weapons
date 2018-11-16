@@ -1,0 +1,4 @@
+from item import Weapon
+
+
+dagger = Weapon("DAGGER_WEAP", "Dagger", "Daggers", 1, 3)
