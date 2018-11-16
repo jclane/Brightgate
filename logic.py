@@ -80,7 +80,7 @@ class InventoryItem:
         elif self.quantity == 1:
             return self.item.name + " " + str(self.quantity)
 
-    def get_name(self):
+    def get_id(self):
         return self.item.name
 
 
@@ -116,15 +116,15 @@ class Inventory:
     def combine_stacks(self):
         """
         Loops through inventory list looking for elements with
-        matching names so thier quantities can be combined and
+        matching IDs so thier quantities can be combined and
         the duplicate item can be removed.
         """
         for forward in range(0, len(self.inventory) - 1):
             for backward in range(len(self.inventory), 0, -1):
                 if (self.inventory[backward - 1].quantity is not 0 and
                         forward != backward -1 and
-                        self.inventory[forward].get_name() ==
-                        self.inventory[backward - 1].get_name()):
+                        self.inventory[forward].get_id() ==
+                        self.inventory[backward - 1].get_id()):
                     quantity = self.inventory[forward].quantity = self.inventory[forward].quantity + self.inventory[backward - 1].quantity
                     self.inventory[forward].quantity = quantity
                     self.inventory[backward - 1].quantity = 0
@@ -135,22 +135,34 @@ class Inventory:
 
 class Quest:
 
-    reward_items = []
-
-    def __init__(self, id=0, name="", description="", reward_xp=0, reward_gold=0):
+    def __init__(self, id=0, name="", description="", reward_xp=0, reward_gold=0, reward_table=[]):
         self.id = id
         self.name = name
         self.description = description
         self.reward_xp = reward_xp
         self.reward_gold = reward_gold
-        self.is_complete = False
+        self.reward_table = reward_table
+        
 
     def reward_player(self, player):
         player.set_xp = player.xp + self.reward_xp
         player.set_gold = player.gold + self.reward_gold
-        player.add_inventory(self.reward_items[randint(0, len(self.reward_items) - 1)])
+        if self.reward_table:
+            rand_int = randint(0, len(self.reward_table) - 1)
+            player.inventory.add(self.reward_table[rand_int], 1)
 
 
+class PlayerQuest:
+    
+    def __init__(self, quest, is_complete=False):
+        self.quest = quest
+        self.is_complete = is_complete
+        
+    def complete(self, player):
+        self.is_complete = True
+        self.quest.reward_player(player)
+        
+        
 class Player(Actor):
 
 
@@ -160,6 +172,7 @@ class Player(Actor):
         self.xp = xp
         self.level = level
         self.inventory = Inventory()
+        self.quests = []
 
     def use_item(self, item_id):
         """
@@ -176,11 +189,9 @@ class Player(Actor):
             return "You do not posses that item."
 
     def accept_quest(self, quest):
-        self.quests.append(quest)
+        _ = PlayerQuest(quest, False)
+        self.quests.append(_)
 
-    def get_quest_reward(self, quest):
-        if quest.is_complete:
-            quest.reward_player(self)
 
 
 class Monster(Actor):
