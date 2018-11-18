@@ -3,7 +3,7 @@ from random import randint
 
 class Actor:
 
-    def __init__(self, max_hp, current_hp, id=0, name=""):
+    def __init__(self, id, name, max_hp, current_hp):
         self.id = id
         self.name = name
         self.max_hp = max_hp
@@ -54,18 +54,33 @@ class Actor:
 
 class Location:
 
-    def __init__(self, id=0, name="", description=""):
+    def __init__(self, id=0, name="", description="", mobs=[]):
         self.id = id
         self.name = name
         self.description = description
+        self.mobs = mobs
+
+    def get_mob_by_name(self, mob_name):
+        """
+        Checks if an mob is in the location.
+
+        :param mob_name: String
+        :return: None or the mob object
+        """
+        for mob in self.mobs:
+            if mob_name == mob.name:
+                return mob
+
+        return None
 
 
 class Item:
 
-    def __init__(self, id, name, name_plural):
+    def __init__(self, id, name, name_plural, useable):
         self.id = id
         self.name = name
         self.name_plural = name_plural
+        self.useable = useable
 
 
 class InventoryItem:
@@ -109,6 +124,19 @@ class Inventory:
         """
         for item in self.inventory:
             if item_id == item.item.id:
+                return item
+
+        return None
+
+    def get_item_by_name(self, item_name):
+        """
+        Checks if an item is in the inventory.
+
+        :param item_name: String
+        :return: None or the item from inventory
+        """
+        for item in self.inventory:
+            if item_name == item.item.name:
                 return item
 
         return None
@@ -165,9 +193,8 @@ class PlayerQuest:
         
 class Player(Actor):
 
-
-    def __init__(self, max_hp, current_hp, gold, xp, level):
-        super(Player, self).__init__(max_hp, current_hp)
+    def __init__(self, id, name, max_hp, current_hp, gold, xp, level):
+        super(Player, self).__init__(id, name, max_hp, current_hp)
         self.gold = gold
         self.xp = xp
         self.level = level
@@ -193,13 +220,12 @@ class Player(Actor):
         self.quests.append(_)
 
 
-
 class Monster(Actor):
 
     loot_table = []
     loot = ""
 
-    def __init__(self, id="", name="", max_hp=0, current_hp=0, max_damage=0, reward_xp=0, reward_gold=0):
+    def __init__(self, id, name, max_hp=0, current_hp=0, max_damage=0, reward_xp=0, reward_gold=0):
         super(Monster, self).__init__(id, name, max_hp, current_hp)
         self.max_damage = max_damage
         self.reward_xp = reward_xp
