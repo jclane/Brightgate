@@ -5,7 +5,8 @@ import locations as loc
 import weapons as wep
 from logic import Player
 
-player = Player("Player", "Bob", 100, 100, 123, 0, 1)
+player = Player("Player", "Bob", 10, 10, 5, 0, 1)
+player.location = loc.entry_gate
 dagger = wep.dagger
 player.inventory.add(dagger, 1)
 
@@ -17,97 +18,156 @@ class Main(tk.Tk):
 
         tk.Tk.__init__(self, *args, **kwargs)
 
-        left_frame = tk.Frame(self)
-        left_frame.grid(column=0, row=0, padx=5, pady=5, sticky="NW")
-        stat_frame = tk.Frame(left_frame)
-        stat_frame.grid(column=0, row=0)
-        inventory_frame = tk.Frame(left_frame)
-        inventory_frame.grid(column=0, row=1)
+        self.left_frame = tk.Frame(self)
+        self.left_frame.grid(column=0, row=0, padx=5, pady=5, sticky="NW")
+        self.stat_frame = tk.Frame(self.left_frame)
+        self.stat_frame.grid(column=0, row=0)
+        self.inventory_frame = tk.Frame(self.left_frame)
+        self.inventory_frame.grid(column=0, row=1)
 
-        right_frame = tk.Frame(self)
-        right_frame.grid(column=1, row=0, padx=5, pady=5, sticky="NE")
-        location_frame = tk.Frame(right_frame)
-        location_frame.grid(column=0, row=0, padx=5, pady=5)
-        combat_log_frame = tk.Frame(right_frame)
-        combat_log_frame.grid(column=0, row=1, padx=5, pady=5)
-        movement_frame = tk.Frame(right_frame)
-        movement_frame.grid(column=0, row=2, padx=5, pady=5)
-        action_frame = tk.Frame(right_frame)
-        action_frame.grid(column=0, row=3, padx=5, pady=5)
+        self.right_frame = tk.Frame(self)
+        self.right_frame.grid(column=1, row=0, padx=5, pady=5, sticky="NE")
+        self.location_frame = tk.Frame(self.right_frame)
+        self.location_frame.grid(column=0, row=0, padx=5, pady=5)
+        self.combat_log_frame = tk.Frame(self.right_frame)
+        self.combat_log_frame.grid(column=0, row=1, padx=5, pady=5)
+        self.movement_frame = tk.Frame(self.right_frame)
+        self.movement_frame.grid(column=0, row=2, padx=5, pady=5)
+        self.action_frame = tk.Frame(self.right_frame)
+        self.action_frame.grid(column=0, row=3, padx=5, pady=5)
 
-        tk.Label(stat_frame, text="Health:").grid(column=0, row=0)
-        tk.Label(stat_frame, text="Gold:").grid(column=0, row=1)
-        tk.Label(stat_frame, text="Experience:").grid(column=0, row=2)
-        tk.Label(stat_frame, text="Level:").grid(column=0, row=3)
+        tk.Label(self.stat_frame, text="Health:").grid(column=0, row=0)
+        tk.Label(self.stat_frame, text="Gold:").grid(column=0, row=1)
+        tk.Label(self.stat_frame, text="Experience:").grid(column=0, row=2)
+        tk.Label(self.stat_frame, text="Level:").grid(column=0, row=3)
 
-        player_health_var = tk.StringVar()
-        player_health_var.set(player.get_current_hp())
-        player_gold_var = tk.StringVar()
-        player_gold_var.set(player.get_gold())
-        player_xp_var = tk.StringVar()
-        player_xp_var.set(player.get_xp())
-        player_level_var = tk.StringVar()
-        player_level_var.set(player.get_level())
+        self.player_health_var = tk.StringVar()
+        self.player_health_var.set(player.get_current_hp())
+        self.player_gold_var = tk.StringVar()
+        self.player_gold_var.set(player.get_gold())
+        self.player_xp_var = tk.StringVar()
+        self.player_xp_var.set(player.get_xp())
+        self.player_level_var = tk.StringVar()
+        self.player_level_var.set(player.get_level())
 
-        player_health = tk.Label(stat_frame,
-                                 textvariable=player_health_var)
-        player_health.grid(column=1, row=0)
-        player_gold = tk.Label(stat_frame, textvariable=player_gold_var)
-        player_gold.grid(column=1, row=1)
-        player_xp = tk.Label(stat_frame, textvariable=player_xp_var)
-        player_xp.grid(column=1, row=2)
-        player_level = tk.Label(stat_frame, textvariable=player_level_var)
-        player_level.grid(column=1, row=3)
+        self.player_health = tk.Label(self.stat_frame,
+                                 textvariable=self.player_health_var)
+        self.player_health.grid(column=1, row=0)
+        self.player_gold = tk.Label(self.stat_frame, textvariable=self.player_gold_var)
+        self.player_gold.grid(column=1, row=1)
+        self.player_xp = tk.Label(self.stat_frame, textvariable=self.player_xp_var)
+        self.player_xp.grid(column=1, row=2)
+        self.player_level = tk.Label(self.stat_frame, textvariable=self.player_level_var)
+        self.player_level.grid(column=1, row=3)
 
-        inventory_list = tk.Listbox(inventory_frame)
-        inventory_list.grid(column=0, row=0)
+        self.inventory_list = tk.Listbox(self.inventory_frame)
+        self.inventory_list.grid(column=0, row=0)
 
-        location_desc_box = tk.Text(location_frame, bg="light grey",
+        self.location_desc_box = tk.Text(self.location_frame, bg="light grey",
                                     height=10, width=65)
-        location_desc_box.grid(column=0, row=0)
+        self.location_desc_box.grid(column=0, row=0)
 
-        location_desc_box.insert(END, "\n" + loc.entry_gate.name + "\n")
-        location_desc_box.insert(END, "\n" + loc.entry_gate.description)
-        location_desc_box.configure(state="disabled")
+        self.location_desc_box.insert(END, "\n" + loc.entry_gate.name + "\n")
+        self.location_desc_box.insert(END, "\n" + loc.entry_gate.description)
+        self.location_desc_box.configure(state="disabled")
 
-        def update_log(message):
-            combat_log_box.insert(END, message + "\n")
+        tk.Button(self.combat_log_frame, text="Look", command=self.look_around).grid(column=0, row=1)
 
-        combat_log_box = tk.Text(combat_log_frame, bg="light grey", height=10,
-                                 width=45)
-        combat_log_box.grid(column=0, row=0)
+        self.combat_log_box = tk.Text(self.combat_log_frame, bg="light grey", height=10,
+                                 width=65)
+        self.combat_log_box.grid(column=0, row=0)
 
-        def move_it(direction):
-            combat_log_box.insert(END, "\nMoving " + direction)
+        self.update_exits()
 
-        # This will obviously have to be scrapped completely.
-        movement = ["North", "South", "East", "West"]
-        for move in enumerate(movement):
-            tk.Button(movement_frame, text=move[1], width=10,
-                      command=lambda: move_it(move[1])) \
-                .grid(column=move[0], row=0)
+        self.weapon_var = tk.StringVar()
+        self.weapons = [item.item.name for item in player.inventory.inventory if
+                        item.item.useable]
+        self.weapon_var.set(self.weapons[0])
+        tk.OptionMenu(self.action_frame,
+                      self.weapon_var,
+                      *self.weapons).grid(column=0, row=0)
+        self.action_button = tk.Button(self.action_frame, text="Attack",
+                                       command=lambda: self.use_item(self.weapon_var.get(),
+                                       self.target_var.get()))
+        self.action_button.grid(column=2, row=0, sticky="EW")
 
-        def do_it(item_name, target_name):
-            item = player.inventory.get_item_by_name(item_name)
-            target = loc.entry_gate.get_mob_by_name(target_name)
-            item.item.use(target)
-            update_log("Player deals " + item.item.use(target) + "to " + target_name)
+        self.target_combo = None
+        self.target_var = tk.StringVar()
+        self.target_var.set("")
+        self.update_targets()
 
-        weapon_var = tk.StringVar()
-        weapons = [item.item.name for item in player.inventory.inventory if
-                   item.item.useable]
-        weapon_var.set(weapons[0])
-        tk.OptionMenu(action_frame, weapon_var, *weapons).grid(column=0, row=0)
-        tk.Button(action_frame, text="Attack",
-                  command=lambda: do_it(weapon_var.get(),
-                                        target_var.get())).grid(column=2, row=0,
-                                                                sticky="EW")
+    def look_around(self):
+        """
+        Displays the extended location description in
+        the combat_log_box
+        """
+        self.update_log(player.location.look())
 
-        target_var = tk.StringVar()
-        targets = [target.name for target in loc.entry_gate.mobs]
-        target_var.set(targets[0])
-        tk.OptionMenu(action_frame, target_var, *targets).grid(column=1, row=0)
+    def update_targets(self):
+        """
+        Updates the target_combo button based on what
+        mobs are currenly alive in the room.
 
+        If there are none, the action_button is disabled
+        and the target_combo is set to 'NONE'.
+        """
+        targets = [player.location.mobs[mob].name for mob in player.location.mobs if player.location.mobs[mob].current_hp > 0]
+        if not targets:
+            targets = ["NONE"]
+            self.action_button.configure(state="disabled")
+        else:
+            self.action_button.configure(state="normal")
+
+        self.target_var.set(targets[0])
+        target_combo = tk.OptionMenu(self.action_frame, self.target_var, *targets)
+        target_combo.grid(column=1, row=0)
+
+    def use_item(self, item_name, target):
+        """
+        Allows the player to use an item from their inventory.
+
+        :param item_name: Name of the item to use
+        :param target: Target the item will used on
+        """
+        item = player.inventory.get_item_by_name(item_name)
+        target = loc.entry_gate.get_mob(target)
+        self.update_log(item.item.use(target, player))
+        self.update_targets()
+
+    def update_exits(self):
+        """
+        Updates the exit buttons available based on the player's
+        current location.
+        """
+        exits = [direction for direction in player.location.exits]
+        for option in enumerate(exits):
+            _ = tk.Button(self.movement_frame, text=option[1],
+                          command=lambda direction=option[1]:
+                          self.move_it(direction))
+            _.grid(column=option[0], row=0)
+
+    def move_it(self, direction):
+        """
+        Allows te player to move to another room by updating the
+        player.location attribute.
+
+        :param direction:  Direction the player wishes to move in
+        """
+        self.combat_log_box.insert(END, "\nMoving " + direction.lower())
+        player.location = player.location.exits[direction]
+        self.location_desc_box.insert(END, "\n" * 10)
+        self.location_desc_box.insert(END, player.location.name + "\n")
+        self.location_desc_box.insert(END, player.location.description)
+        self.update_exits()
+
+    def update_log(self, message):
+        """
+        Updates the combat_log_box with message.
+
+        :param message:  Message to be shown
+        """
+        self.combat_log_box.insert(END, "\n" + message + "\n")
+        self.combat_log_box.see(END)
 
 
 if __name__ == "__main__":
