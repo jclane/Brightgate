@@ -77,6 +77,7 @@ class Main(tk.Tk):
                                  width=65)
         self.combat_log_box.grid(column=0, row=0)
 
+        self.exits = []
         self.update_exits()
 
         self.weapon_var = tk.StringVar()
@@ -139,12 +140,17 @@ class Main(tk.Tk):
         Updates the exit buttons available based on the player's
         current location.
         """
-        exits = [direction for direction in player.location.exits]
-        for option in enumerate(exits):
+        if self.exits:
+            for button in self.exits:
+                button.destroy()
+        options = [direction for direction in player.location.exits]
+        self.exits = []
+        for option in enumerate(options):
             _ = tk.Button(self.movement_frame, text=option[1],
                           command=lambda direction=option[1]:
                           self.move_it(direction))
             _.grid(column=option[0], row=0)
+            self.exits.append(_)
 
     def move_it(self, direction):
         """
@@ -153,11 +159,14 @@ class Main(tk.Tk):
 
         :param direction:  Direction the player wishes to move in
         """
-        self.combat_log_box.insert(END, "\nMoving " + direction.lower())
+        self.combat_log_box.insert(END, "Moving " + direction.lower())
         player.location = player.location.exits[direction]
+        self.location_desc_box.configure(state="normal")
         self.location_desc_box.insert(END, "\n" * 10)
         self.location_desc_box.insert(END, player.location.name + "\n")
         self.location_desc_box.insert(END, player.location.description)
+        self.location_desc_box.configure(state="disabled")
+        self.update_targets()
         self.update_exits()
 
     def update_log(self, message):
