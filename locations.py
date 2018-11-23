@@ -1,13 +1,13 @@
-from random import randint
+import rooms as rom
+from logic import Location
 
-from logic import Location, Monster
 
-entry_gate = Location()
-entry_gate.id = 0
-entry_gate.name = "Entry Gate"
-entry_gate.description = (
-    "A cold iron gate blocks your path."
+the_castle = Location("LOC_THE_CASTLE", "Castle Brightgate")
+the_castle.description = "Castle Brightgate, once seat of the Blah Empire"
+the_castle.ext_description = (
+    "While time has clearly taken a toll on the empty castle grounds, nature has done little to reclaim it."
 )
-entry_gate.mobs = [
-    Monster("MOB_ORK", "Orc Runt", 10, 10, 2, 5, randint(0, 3))
-]
+the_castle.rooms["ROM_ENTRY_GATE"] = rom.entry_gate
+the_castle.rooms["ROM_COURT_YARD"] = rom.court_yard
+rom.entry_gate.parent = the_castle
+rom.court_yard.parent = the_castle

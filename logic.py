@@ -54,24 +54,12 @@ class Actor:
 
 class Location:
 
-    def __init__(self, id=0, name="", description="", mobs=[]):
+    def __init__(self, id=0, name="", description="", ext_description=""):
         self.id = id
         self.name = name
         self.description = description
-        self.mobs = mobs
-
-    def get_mob_by_name(self, mob_name):
-        """
-        Checks if an mob is in the location.
-
-        :param mob_name: String
-        :return: None or the mob object
-        """
-        for mob in self.mobs:
-            if mob_name == mob.name:
-                return mob
-
-        return None
+        self.ext_description = ext_description
+        self.rooms = {}
 
 
 class Item:
@@ -191,6 +179,19 @@ class PlayerQuest:
         self.quest.reward_player(player)
         
         
+class Container:
+    
+    def __init__(self, id="", name="", description="", inventory=Inventory()):
+        self.id = id
+        self.name = name
+        self.description = description
+        self.inventory = inventory
+        
+    def open(self):
+        out = [item.name for item in self.inventory]
+        return out
+        
+        
 class Player(Actor):
 
     def __init__(self, id, name, max_hp, current_hp, gold, xp, level):
@@ -222,17 +223,82 @@ class Player(Actor):
 
 class Monster(Actor):
 
-    loot_table = []
-    loot = ""
-
     def __init__(self, id, name, max_hp=0, current_hp=0, max_damage=0, reward_xp=0, reward_gold=0):
         super(Monster, self).__init__(id, name, max_hp, current_hp)
         self.max_damage = max_damage
         self.reward_xp = reward_xp
         self.reward_gold = reward_gold
+        self.inventory = Inventory()
 
     def on_death(self, player):
-        print(self.name, "falls dead at your feet")
+              
+        name = self.name
         player.xp = player.xp + self.reward_xp
         self.name += " corpse"
-        self.loot = self.loot_table[randint(0, len(self.loot_table) - 1)]
+        player.location.containers.append(
+            Container(self.id, self.name, description="dead body", inventory=self.inventory)
+        )
+        for mob in player.location.mobs:
+            if mob == self:
+                index = player.location.mobs.index(mob)
+                del player.location.mobs[index]
+        return "{} falls dead at your feet".format(name)
+
+        
+class Room(Location):
+    
+    def __init__(self, id="", name="", description="", ext_description="", parent="", exits=[], containers=[], mobs=[]):
+        super(Room, self).__init__(id, name, description, ext_description)
+        self.parent = parent
+        self.exits = exits
+        self.containers = containers
+        self.mobs = mobs
+    
+    def get_mob_by_name(self, mob_name):
+        """
+        Checks if an mob is in the location.
+
+        :param mob_name: String
+        :return: None or the mob object
+        """
+        for mob in self.mobs:
+            if mob_name == mob.name:
+                return mob
+
+        return None
+
+    def get_room_by_id(self, id):
+        """
+        Checks if an mob is in the location.
+
+        :param mob_name: String
+        :return: None or the mob object
+        """
+        if id in self.parent.rooms.keys():
+            return self.parent.rooms[id]
+        return None      
+        
+    def look(self, target=""):
+        """
+        Looks at an object in the room if target is specified,
+        otherwise looks at whole room.
+        
+        :param target: Optional variable specifing what to look at
+        :return: Extended description of the room, target, or None
+        """
+        if target == "":
+            out = self.ext_description + "\n"
+            if self.mobs or self.containers:
+                out += "\nAt first glance you see:"
+            if self.mobs:
+                for mob in self.mobs:
+                    out += "{}{}".format("\n  ", mob.name)
+            if self.containers:
+                for container in self.containers:
+                    out += "{}{}".format("\n  ", container.name)
+                
+            return out
+        elif target and target in self:
+            return target.ext_description
+        
+        return None
