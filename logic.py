@@ -3,9 +3,10 @@ from random import randint
 
 class Actor:
 
-    def __init__(self, id, name, max_hp, current_hp):
+    def __init__(self, id, name, ext_description, max_hp, current_hp):
         self.id = id
         self.name = name
+        self.ext_description = ext_description
         self.max_hp = max_hp
         self.current_hp = current_hp
 
@@ -158,7 +159,6 @@ class Quest:
         self.reward_xp = reward_xp
         self.reward_gold = reward_gold
         self.reward_table = reward_table
-        
 
     def reward_player(self, player):
         player.set_xp = player.xp + self.reward_xp
@@ -169,33 +169,33 @@ class Quest:
 
 
 class PlayerQuest:
-    
+
     def __init__(self, quest, is_complete=False):
         self.quest = quest
         self.is_complete = is_complete
-        
+
     def complete(self, player):
         self.is_complete = True
         self.quest.reward_player(player)
-        
-        
+
+
 class Container:
-    
-    def __init__(self, id="", name="", description="", inventory=Inventory()):
+
+    def __init__(self, id="", name="", ext_description="", inventory=Inventory()):
         self.id = id
         self.name = name
-        self.description = description
+        self.ext_description = ext_description
         self.inventory = inventory
-        
+
     def open(self):
         out = [item.name for item in self.inventory]
         return out
-        
-        
+
+
 class Player(Actor):
 
-    def __init__(self, id, name, max_hp, current_hp, gold, xp, level):
-        super(Player, self).__init__(id, name, max_hp, current_hp)
+    def __init__(self, id, name, ext_description, max_hp, current_hp, gold, xp, level):
+        super(Player, self).__init__(id, name, ext_description, max_hp, current_hp)
         self.gold = gold
         self.xp = xp
         self.level = level
@@ -223,20 +223,26 @@ class Player(Actor):
 
 class Monster(Actor):
 
-    def __init__(self, id, name, max_hp=0, current_hp=0, max_damage=0, reward_xp=0, reward_gold=0):
-        super(Monster, self).__init__(id, name, max_hp, current_hp)
+    def __init__(self, id, name, ext_description, max_hp=0, current_hp=0, max_damage=0, reward_xp=0, reward_gold=0):
+        super(Monster, self).__init__(id, name, ext_description, max_hp, current_hp)
         self.max_damage = max_damage
         self.reward_xp = reward_xp
         self.reward_gold = reward_gold
         self.inventory = Inventory()
 
     def on_death(self, player):
-              
+        """
+        Awards the monster's reward_xp to the player and creates a
+        container object using the monster's inventory in the room with
+        the player and removes the monster itself from the room.
+
+        :return: String with monster defeated message
+        """
         name = self.name
         player.xp = player.xp + self.reward_xp
         self.name += " corpse"
         player.location.containers.append(
-            Container(self.id, self.name, description="dead body", inventory=self.inventory)
+            Container(self.id, self.name, ext_description="The deceased remains of a {}".format(name), inventory=self.inventory)
         )
         for mob in player.location.mobs:
             if mob == self:
@@ -244,16 +250,29 @@ class Monster(Actor):
                 del player.location.mobs[index]
         return "{} falls dead at your feet".format(name)
 
-        
+
 class Room(Location):
-    
+
     def __init__(self, id="", name="", description="", ext_description="", parent="", exits=[], containers=[], mobs=[]):
         super(Room, self).__init__(id, name, description, ext_description)
         self.parent = parent
         self.exits = exits
         self.containers = containers
         self.mobs = mobs
-    
+
+    def get_container_by_name(self, container_name):
+        """
+        Checks if a container is in the location.
+
+        :param container_name: String
+        :return: None or the container object
+        """
+        for container in self.containers:
+            if container_name == container.name:
+                return container
+
+        return None
+
     def get_mob_by_name(self, mob_name):
         """
         Checks if an mob is in the location.
@@ -276,17 +295,17 @@ class Room(Location):
         """
         if id in self.parent.rooms.keys():
             return self.parent.rooms[id]
-        return None      
-        
-    def look(self, target=""):
+        return None
+
+    def look(self, target):
         """
         Looks at an object in the room if target is specified,
         otherwise looks at whole room.
-        
+
         :param target: Optional variable specifing what to look at
         :return: Extended description of the room, target, or None
         """
-        if target == "":
+        if target == "Room":
             out = self.ext_description + "\n"
             if self.mobs or self.containers:
                 out += "\nAt first glance you see:"
@@ -296,9 +315,12 @@ class Room(Location):
             if self.containers:
                 for container in self.containers:
                     out += "{}{}".format("\n  ", container.name)
-                
+
             return out
-        elif target and target in self:
-            return target.ext_description
-        
-        return None
+        else:
+            if self.get_mob_by_name(target):
+                return self.get_mob_by_name(target).ext_description
+            elif self.get_container_by_name(target):
+                return self.get_container_by_name(target).ext_description
+            else:
+                return None

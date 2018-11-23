@@ -6,7 +6,7 @@ import locations as loc
 import weapons as wep
 from logic import Player
 
-player = Player("Player", "Bob", 10, 10, 5, 0, 1)
+player = Player("Player", "Bob", "This is you", 10, 10, 5, 0, 1)
 player.location = rom.entry_gate
 dagger = wep.dagger
 player.inventory.add(dagger, 1)
@@ -32,10 +32,12 @@ class Main(tk.Tk):
         self.location_frame.grid(column=0, row=0, padx=5, pady=5)
         self.combat_log_frame = tk.Frame(self.right_frame)
         self.combat_log_frame.grid(column=0, row=1, padx=5, pady=5)
+        self.look_frame = tk.Frame(self.right_frame)
+        self.look_frame.grid(column=0, row=2, padx=5, pady=5)
         self.movement_frame = tk.Frame(self.right_frame)
-        self.movement_frame.grid(column=0, row=2, padx=5, pady=5)
+        self.movement_frame.grid(column=0, row=3, padx=5, pady=5)
         self.action_frame = tk.Frame(self.right_frame)
-        self.action_frame.grid(column=0, row=3, padx=5, pady=5)
+        self.action_frame.grid(column=0, row=4, padx=5, pady=5)
 
         tk.Label(self.stat_frame, text="Health:").grid(column=0, row=0)
         tk.Label(self.stat_frame, text="Gold:").grid(column=0, row=1)
@@ -72,7 +74,12 @@ class Main(tk.Tk):
         self.location_desc_box.insert(END, "\n" + player.location.description)
         self.location_desc_box.configure(state="disabled")
 
-        tk.Button(self.combat_log_frame, text="Look", command=self.look_around).grid(column=0, row=1)
+        self.look_combo = None
+        self.look_var = tk.StringVar()
+        self.look_var.set("")
+        self.update_look()
+
+        tk.Button(self.look_frame, text="Look", command=lambda: self.look_around(self.look_var.get())).grid(column=1, row=1)
 
         self.combat_log_box = tk.Text(self.combat_log_frame, bg="light grey", height=10,
                                  width=65)
@@ -98,12 +105,25 @@ class Main(tk.Tk):
         self.target_var.set("")
         self.update_targets()
 
-    def look_around(self):
+    def update_look(self):
         """
-        Displays the extended location description in
+        Updates the list of things to look at with all current possible
+        things the player can look at.
+        """
+        mobs = [mob.name for mob in player.location.mobs]
+        containers = [container.name for container in player.location.containers]
+        look = mobs + containers
+        look.insert(0, "Room")
+        self.look_var.set("Room")
+        look_combo = tk.OptionMenu(self.look_frame, self.look_var, *look)
+        look_combo.grid(column=0, row=1)
+
+    def look_around(self, target):
+        """
+        Displays the ext_description of target in
         the combat_log_box
         """
-        self.update_log(player.location.look())
+        self.update_log(player.location.look(target))
 
     def update_targets(self):
         """
@@ -127,14 +147,12 @@ class Main(tk.Tk):
     def use_item(self, item_name, target):
         """
         Allows the player to use an item from their inventory.
-
-        :param item_name: Name of the item to use
-        :param target: Target the item will used on
         """
         item = player.inventory.get_item_by_name(item_name)
         target = player.location.get_mob_by_name(target)
         self.update_log(item.item.use(target, player))
         self.update_targets()
+        self.update_look()
 
     def update_exits(self):
         """
@@ -168,6 +186,7 @@ class Main(tk.Tk):
         self.location_desc_box.insert(END, "\n" + player.location.description)
         self.location_desc_box.configure(state="disabled")
         self.update_targets()
+        self.update_look()
         self.update_exits()
 
     def update_log(self, message):

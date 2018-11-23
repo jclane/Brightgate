@@ -11,8 +11,8 @@ entry_gate.ext_description = (
 )
 entry_gate.exits = {"North":"ROM_COURT_YARD"}
 entry_gate.mobs = [
-    Monster("MOB_ORK", "Orc Runt", 10, 10, 2, 5, randint(0, 3)),
-    Monster("MOB_ORK", "Orc", 15, 15, 5, 5, randint(0, 3))
+    Monster("MOB_ORK", "Orc Runt", "You could win this", 10, 10, 2, 5, randint(0, 3)),
+    Monster("MOB_ORK", "Orc", "One tough hombre", 15, 15, 5, 5, randint(0, 3))
 ]
 
 court_yard = Room("ROM_COURTYARD", "The Courtyard")
