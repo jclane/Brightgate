@@ -40,7 +40,10 @@ class Weapon(Item):
         out = "\n".join(out)
         return out
 
-    def use(self, target):
+    def use(self, target, player):
         damage = randint(self.min_damage, self.max_damage)
         target.current_hp = target.current_hp - damage
-        return str(damage) + " damage to "
+        if target.current_hp > 0:
+            return "{} deals {} to {}".format(player.name, str(damage), target.name)
+        else:
+            return target.on_death(player)

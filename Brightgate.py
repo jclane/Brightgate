@@ -1,12 +1,13 @@
 import tkinter as tk
 from tkinter import END
 
+import rooms as rom
 import locations as loc
 import weapons as wep
 from logic import Player
 
 player = Player("Player", "Bob", 10, 10, 5, 0, 1)
-player.location = loc.entry_gate
+player.location = rom.entry_gate
 dagger = wep.dagger
 player.inventory.add(dagger, 1)
 
@@ -67,8 +68,8 @@ class Main(tk.Tk):
                                     height=10, width=65)
         self.location_desc_box.grid(column=0, row=0)
 
-        self.location_desc_box.insert(END, "\n" + loc.entry_gate.name + "\n")
-        self.location_desc_box.insert(END, "\n" + loc.entry_gate.description)
+        self.location_desc_box.insert(END, player.location.name + "\n")
+        self.location_desc_box.insert(END, "\n" + player.location.description)
         self.location_desc_box.configure(state="disabled")
 
         tk.Button(self.combat_log_frame, text="Look", command=self.look_around).grid(column=0, row=1)
@@ -112,7 +113,7 @@ class Main(tk.Tk):
         If there are none, the action_button is disabled
         and the target_combo is set to 'NONE'.
         """
-        targets = [player.location.mobs[mob].name for mob in player.location.mobs if player.location.mobs[mob].current_hp > 0]
+        targets = [mob.name for mob in player.location.mobs]
         if not targets:
             targets = ["NONE"]
             self.action_button.configure(state="disabled")
@@ -131,7 +132,7 @@ class Main(tk.Tk):
         :param target: Target the item will used on
         """
         item = player.inventory.get_item_by_name(item_name)
-        target = loc.entry_gate.get_mob(target)
+        target = player.location.get_mob_by_name(target)
         self.update_log(item.item.use(target, player))
         self.update_targets()
 
@@ -159,12 +160,12 @@ class Main(tk.Tk):
 
         :param direction:  Direction the player wishes to move in
         """
-        self.combat_log_box.insert(END, "Moving " + direction.lower())
-        player.location = player.location.exits[direction]
+        self.update_log("Moving " + direction.lower())
+        player.location = player.location.get_room_by_id(player.location.exits[direction])
         self.location_desc_box.configure(state="normal")
-        self.location_desc_box.insert(END, "\n" * 10)
+        self.location_desc_box.delete(1.0, END)
         self.location_desc_box.insert(END, player.location.name + "\n")
-        self.location_desc_box.insert(END, player.location.description)
+        self.location_desc_box.insert(END, "\n" + player.location.description)
         self.location_desc_box.configure(state="disabled")
         self.update_targets()
         self.update_exits()
@@ -175,7 +176,7 @@ class Main(tk.Tk):
 
         :param message:  Message to be shown
         """
-        self.combat_log_box.insert(END, "\n" + message + "\n")
+        self.combat_log_box.insert(END, "\n" + message)
         self.combat_log_box.see(END)
 
 
