@@ -4,13 +4,14 @@ from tkinter import END
 import rooms as rom
 import locations as loc
 import weapons as wep
-from logic import Player
+from logic import Player, Monster
 
 player = Player("Player", "Bob", "This is you", 10, 10, 5, 0, 1)
 player.location = rom.entry_gate
-dagger = wep.dagger
-player.inventory.add(dagger, 1)
+player.inventory.add(wep.dagger, 1)
 
+nobody = Monster("NOBODY", "NOONE", "NOTEVENATHING", 10, 10, 5, 0, 1)
+nobody.inventory.add(wep.spear, 100)
 
 class Main(tk.Tk):
     """Main program GUI."""
@@ -19,6 +20,7 @@ class Main(tk.Tk):
 
         tk.Tk.__init__(self, *args, **kwargs)
 
+        # Left side
         self.left_frame = tk.Frame(self)
         self.left_frame.grid(column=0, row=0, padx=5, pady=5, sticky="NW")
         self.stat_frame = tk.Frame(self.left_frame)
@@ -26,19 +28,21 @@ class Main(tk.Tk):
         self.inventory_frame = tk.Frame(self.left_frame)
         self.inventory_frame.grid(column=0, row=1)
 
+        # Rigth side
         self.right_frame = tk.Frame(self)
         self.right_frame.grid(column=1, row=0, padx=5, pady=5, sticky="NE")
         self.location_frame = tk.Frame(self.right_frame)
         self.location_frame.grid(column=0, row=0, padx=5, pady=5)
         self.combat_log_frame = tk.Frame(self.right_frame)
         self.combat_log_frame.grid(column=0, row=1, padx=5, pady=5)
-        self.look_frame = tk.Frame(self.right_frame)
-        self.look_frame.grid(column=0, row=2, padx=5, pady=5)
         self.movement_frame = tk.Frame(self.right_frame)
-        self.movement_frame.grid(column=0, row=3, padx=5, pady=5)
+        self.movement_frame.grid(column=0, row=2, padx=5, pady=5)
+        self.look_frame = tk.Frame(self.right_frame)
+        self.look_frame.grid(column=0, row=3, padx=5, pady=5)
         self.action_frame = tk.Frame(self.right_frame)
         self.action_frame.grid(column=0, row=4, padx=5, pady=5)
 
+        # Player stats
         tk.Label(self.stat_frame, text="Health:").grid(column=0, row=0)
         tk.Label(self.stat_frame, text="Gold:").grid(column=0, row=1)
         tk.Label(self.stat_frame, text="Experience:").grid(column=0, row=2)
@@ -63,9 +67,12 @@ class Main(tk.Tk):
         self.player_level = tk.Label(self.stat_frame, textvariable=self.player_level_var)
         self.player_level.grid(column=1, row=3)
 
+        # Player inventory
         self.inventory_list = tk.Listbox(self.inventory_frame)
         self.inventory_list.grid(column=0, row=0)
+        self.update_player_inventory()
 
+        # Room info
         self.location_desc_box = tk.Text(self.location_frame, bg="light grey",
                                     height=10, width=65)
         self.location_desc_box.grid(column=0, row=0)
@@ -74,6 +81,7 @@ class Main(tk.Tk):
         self.location_desc_box.insert(END, "\n" + player.location.description)
         self.location_desc_box.configure(state="disabled")
 
+        # Look command
         self.look_combo = None
         self.look_var = tk.StringVar()
         self.look_var.set("")
@@ -81,13 +89,16 @@ class Main(tk.Tk):
 
         tk.Button(self.look_frame, text="Look", command=lambda: self.look_around(self.look_var.get())).grid(column=1, row=1)
 
+        # Combat/action log
         self.combat_log_box = tk.Text(self.combat_log_frame, bg="light grey", height=10,
                                  width=65)
         self.combat_log_box.grid(column=0, row=0)
 
+        # Movement commands
         self.exits = []
         self.update_exits()
 
+        # Combat/action commands
         self.weapon_var = tk.StringVar()
         self.weapons = [item.item.name for item in player.inventory.inventory if
                         item.item.useable]
@@ -104,6 +115,12 @@ class Main(tk.Tk):
         self.target_var = tk.StringVar()
         self.target_var.set("")
         self.update_targets()
+
+
+    def update_player_inventory(self):
+        player_inventory = [item for item in player.inventory.inventory]
+        for item in player_inventory:
+            self.inventory_list.insert(END, "{} {}".format(item.item.name, item.quantity))
 
     def update_look(self):
         """
