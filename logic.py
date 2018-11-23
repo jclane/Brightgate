@@ -90,7 +90,7 @@ class InventoryItem:
 
 class Inventory:
 
-    def __init__(self, inventory=[]):
+    def __init__(self, inventory):
         self.inventory = inventory
 
     def __str__(self):
@@ -181,7 +181,7 @@ class PlayerQuest:
 
 class Container:
 
-    def __init__(self, id="", name="", ext_description="", inventory=Inventory()):
+    def __init__(self, id="", name="", ext_description="", inventory=Inventory([])):
         self.id = id
         self.name = name
         self.ext_description = ext_description
@@ -191,6 +191,10 @@ class Container:
         out = [item.name for item in self.inventory]
         return out
 
+    def loot(self, item, player):
+        player.inventory.add(self.inventory[item], 1)
+        self.inventory.remove(item)
+
 
 class Player(Actor):
 
@@ -199,7 +203,7 @@ class Player(Actor):
         self.gold = gold
         self.xp = xp
         self.level = level
-        self.inventory = Inventory()
+        self.inventory = Inventory([])
         self.quests = []
 
     def use_item(self, item_id):
@@ -228,7 +232,7 @@ class Monster(Actor):
         self.max_damage = max_damage
         self.reward_xp = reward_xp
         self.reward_gold = reward_gold
-        self.inventory = Inventory()
+        self.inventory = Inventory([])
 
     def on_death(self, player):
         """
