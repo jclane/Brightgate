@@ -115,6 +115,30 @@ class Main(tk.Tk):
         self.target_var = tk.StringVar()
         self.target_var.set("")
         self.update_targets()
+        
+               
+        self.lootables_combo = None
+        self.lootable_var = tk.StringVar()
+        self.lootable_var.set("")
+        self.update_lootables()
+        
+        self.loot_button = tk.Button(self.action_frame, text="Loot",
+                                     command=lambda: take_item(self.lootable_var.get(), player))
+        self.loot_button.grid(column=1, row=1)
+                                     
+    def update_lootables(self):
+        lootables = [container.name for container in player.location.containers]
+
+        if not lootables:
+            lootables = ["NONE"]
+            #self.loot_button.configure(state="disabled")
+        else:
+            pass
+            #self.loot_button.configure(state="nomal")
+            
+        self.lootable_var.set(lootables[0])
+        self.lootables_combo = tk.OptionMenu(self.action_frame, self.lootable_var, *lootables)
+        self.lootables_combo.grid(column=1, row=1)
 
 
     def update_player_inventory(self):
