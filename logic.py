@@ -192,8 +192,10 @@ class Container:
         return out
 
     def loot(self, item, player):
-        player.inventory.add(self.inventory[item], 1)
-        self.inventory.remove(item)
+        item = self.inventory.get_item_by_name(item)
+        player.inventory.add(item.item, 1)
+        player.inventory.combine_stacks()
+        item.quantity = item.quantity - 1
 
 
 class Player(Actor):
