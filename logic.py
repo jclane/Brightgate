@@ -3,12 +3,13 @@ from random import randint
 
 class Actor:
 
-    def __init__(self, id, name, ext_description, max_hp, current_hp):
+    def __init__(self, id, name, ext_description, max_hp, current_hp, speed):
         self.id = id
         self.name = name
         self.ext_description = ext_description
         self.max_hp = max_hp
         self.current_hp = current_hp
+        self.speed = speed
 
     def get_current_hp(self):
         return self.current_hp
@@ -208,8 +209,8 @@ class Container:
 
 class Player(Actor):
 
-    def __init__(self, id, name, ext_description, max_hp, current_hp, gold, xp, level):
-        super(Player, self).__init__(id, name, ext_description, max_hp, current_hp)
+    def __init__(self, id, name, ext_description, max_hp, current_hp, speed, gold, xp, level):
+        super(Player, self).__init__(id, name, ext_description, max_hp, current_hp, speed)
         self.gold = gold
         self.xp = xp
         self.level = level
@@ -233,12 +234,15 @@ class Player(Actor):
     def accept_quest(self, quest):
         _ = PlayerQuest(quest, False)
         self.quests.append(_)
+        
+    def on_death(self, mob_name):
+        return "You died"
 
 
 class Monster(Actor):
 
-    def __init__(self, id, name, ext_description, max_hp=0, current_hp=0, max_damage=0, reward_xp=0, reward_gold=0):
-        super(Monster, self).__init__(id, name, ext_description, max_hp, current_hp)
+    def __init__(self, id, name, ext_description, max_hp=0, current_hp=0, max_damage=0, speed=0, reward_xp=0, reward_gold=0):
+        super(Monster, self).__init__(id, name, ext_description, max_hp, current_hp, speed)
         self.max_damage = max_damage
         self.reward_xp = reward_xp
         self.reward_gold = reward_gold
