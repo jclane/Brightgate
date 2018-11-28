@@ -101,8 +101,16 @@ class Inventory:
         item_to_add = InventoryItem(item, quantity)
         self.inventory.append(item_to_add)
 
-    def remove(self, item):
-        self.inventory.remove(item)
+    def remove(self, item_id, amount_to_remove):
+        for item in self.inventory:
+            if item_id == item.item.id:
+                if item.quantity - amount_to_remove < 0:
+                    print("no")
+                elif item.quantity - amount_to_remove >= 1:
+                    item.quantity = item.quantity - amount_to_remove
+                    
+                if item.quantity - amount_to_remove == 0:
+                    self.inventory.remove(item)
 
     def get_item(self, item_id):
         """
@@ -195,7 +203,7 @@ class Container:
         item = self.inventory.get_item_by_name(item)
         player.inventory.add(item.item, 1)
         player.inventory.combine_stacks()
-        item.quantity = item.quantity - 1
+        self.inventory.remove(item.item.id, 1)
 
 
 class Player(Actor):
@@ -248,7 +256,7 @@ class Monster(Actor):
         player.xp = player.xp + self.reward_xp
         self.name += " corpse"
         player.location.containers.append(
-            Container(self.id, self.name, ext_description="The deceased remains of a {}".format(name), inventory=self.inventory)
+            Container(self.id, self.name, "The deceased remains of a {}".format(name), self.inventory)
         )
         for mob in player.location.mobs:
             if mob == self:
