@@ -7,12 +7,10 @@ import locations as loc
 import weapons as wep
 from logic import Player, Monster
 
+
 player = Player("Player", "Bob", "This is you", 10, 10, 5, 0, 1)
 player.location = rom.entry_gate
-player.inventory.add(wep.dagger, 1)
-
-nobody = Monster("NOBODY", "NOONE", "NOTEVENATHING", 10, 10, 5, 0, 1)
-nobody.inventory.add(wep.spear, 100)
+player.inventory.add(wep.vorpal_blade, 1)
 
 
 class LootWindow(tk.Frame):
@@ -60,6 +58,7 @@ class LootWindow(tk.Frame):
         self.container_obj.loot(item, player)
         self.update_inventories()
         self.parent.master.update_player_inventory()
+        self.parent.master.update_lootables()
 
     def update_inventories(self):
         self.container_inventory.delete(*self.container_inventory.get_children())
@@ -70,7 +69,6 @@ class LootWindow(tk.Frame):
         if player.inventory:
             for item in player.inventory.inventory:
                 self.player_inventory.insert('', tk.END, text=item.item.name, values=item.quantity)
-
 
 class Main(tk.Tk):
     """Main program GUI."""
@@ -198,7 +196,7 @@ class Main(tk.Tk):
         If there are none, the loot_button is disabled
         and the lootables_combo is set to 'NONE'.
         """
-        lootables = [container.name for container in player.location.containers]
+        lootables = [container.name for container in player.location.containers if container.inventory.inventory]
 
         if not lootables:
             lootables = ["NONE"]
