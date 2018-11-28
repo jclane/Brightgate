@@ -1,4 +1,5 @@
 import tkinter as tk
+import tkinter.ttk as ttk
 from tkinter import END
 
 import rooms as rom
@@ -6,12 +7,68 @@ import locations as loc
 import weapons as wep
 from logic import Player, Monster
 
+
 player = Player("Player", "Bob", "This is you", 10, 10, 5, 0, 1)
 player.location = rom.entry_gate
-player.inventory.add(wep.dagger, 1)
+player.inventory.add(wep.vorpal_blade, 1)
 
-nobody = Monster("NOBODY", "NOONE", "NOTEVENATHING", 10, 10, 5, 0, 1)
-nobody.inventory.add(wep.spear, 100)
+
+class LootWindow(tk.Frame):
+
+    def __init__(self, parent, container_obj):
+        tk.Frame.__init__(self, parent)
+        self.parent = parent
+        self.container_obj = container_obj
+
+        self.loot_frame = tk.Frame(self.parent)
+        self.loot_frame.grid(column=0, row=0)
+
+        self.left_frame = tk.Frame(self.loot_frame)
+        self.left_frame.grid(column=0, row=0)
+        self.center_frame = tk.Frame(self.loot_frame)
+        self.center_frame.grid(column=1, row=0)
+        self.right_frame = tk.Frame(self.loot_frame)
+        self.right_frame.grid(column=2, row=0)
+
+        tk.Label(self.left_frame, text="{} inventory".format(self.container_obj.name)).grid(column=0, row=0)
+        self.container_inventory = ttk.Treeview(self.left_frame, columns=("Item", "Quantity"))
+        self.container_inventory.heading("#0", text="Item")
+        self.container_inventory.heading("#1", text="Quantity")
+        self.container_inventory.column("#1", stretch=tk.NO, minwidth=len("Quantity"))
+        self.container_inventory.column("#2", stretch=tk.NO, minwidth=0, width=0)
+        self.container_inventory.grid(column=0, row=1)
+
+        self.loot_one_button = tk.Button(self.center_frame, text="Loot Item", command=lambda: self.take_one(self.container_inventory.selection()))
+        self.loot_one_button.grid(column=0, row=0)
+        self.loot_all_button = tk.Button(self.center_frame, text="Loot All")
+        self.loot_all_button.grid(column=0, row=1)
+
+        tk.Label(self.right_frame, text="Player inventory").grid(column=2, row=0)
+        self.player_inventory = ttk.Treeview(self.right_frame, columns=("Item", "Quantity"))
+        self.player_inventory.heading("#0", text="Item")
+        self.player_inventory.heading("#1", text="Quantity")
+        self.player_inventory.column("#1", stretch=tk.NO, minwidth=len("Quantity"))
+        self.player_inventory.column("#2", stretch=tk.NO, minwidth=0, width=0)
+        self.player_inventory.grid(column=2, row=1)
+
+        self.update_inventories()
+
+    def take_one(self, item):
+        item = self.container_inventory.item(item,"text")
+        self.container_obj.loot(item, player)
+        self.update_inventories()
+        self.parent.master.update_player_inventory()
+        self.parent.master.update_lootables()
+
+    def update_inventories(self):
+        self.container_inventory.delete(*self.container_inventory.get_children())
+        self.player_inventory.delete(*self.player_inventory.get_children())
+        if self.container_obj:
+            for item in self.container_obj.inventory.inventory:
+                self.container_inventory.insert('', tk.END, text=item.item.name, values=item.quantity)
+        if player.inventory:
+            for item in player.inventory.inventory:
+                self.player_inventory.insert('', tk.END, text=item.item.name, values=item.quantity)
 
 class Main(tk.Tk):
     """Main program GUI."""
@@ -116,9 +173,44 @@ class Main(tk.Tk):
         self.target_var.set("")
         self.update_targets()
 
+        self.loot_button = tk.Button(self.action_frame, text="Loot Body",
+                                     command=lambda: self.loot_container(self.lootable_var.get()))
+        self.loot_button.grid(column=2, row=1)
+
+        self.lootables_combo = None
+        self.lootable_var = tk.StringVar()
+        self.lootable_var.set("")
+        self.update_lootables()
+
+    def loot_container(self, container_name):
+        self.container_obj = player.location.get_container_by_name(container_name)
+        self.loot_window = tk.Toplevel(self)
+        self.loot_window.title("Brightgate | Loot")
+        self.window = LootWindow(self.loot_window, self.container_obj)
+
+    def update_lootables(self):
+        """
+        Updates the loot button based on what
+        containers are in the room.
+
+        If there are none, the loot_button is disabled
+        and the lootables_combo is set to 'NONE'.
+        """
+        lootables = [container.name for container in player.location.containers if container.inventory.inventory]
+
+        if not lootables:
+            lootables = ["NONE"]
+            self.loot_button.configure(state="disabled")
+        else:
+            self.loot_button.configure(state="active")
+
+        self.lootable_var.set(lootables[0])
+        self.lootables_combo = tk.OptionMenu(self.action_frame, self.lootable_var, *lootables)
+        self.lootables_combo.grid(column=1, row=1)
 
     def update_player_inventory(self):
         player_inventory = [item for item in player.inventory.inventory]
+        self.inventory_list.delete(0, END)
         for item in player_inventory:
             self.inventory_list.insert(END, "{} {}".format(item.item.name, item.quantity))
 
@@ -169,6 +261,7 @@ class Main(tk.Tk):
         target = player.location.get_mob_by_name(target)
         self.update_log(item.item.use(target, player))
         self.update_targets()
+        self.update_lootables()
         self.update_look()
 
     def update_exits(self):
@@ -203,6 +296,7 @@ class Main(tk.Tk):
         self.location_desc_box.insert(END, "\n" + player.location.description)
         self.location_desc_box.configure(state="disabled")
         self.update_targets()
+        self.update_lootables()
         self.update_look()
         self.update_exits()
 
