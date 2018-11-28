@@ -6,14 +6,16 @@ import rooms as rom
 import locations as loc
 import weapons as wep
 from logic import Player, Monster
+from combat import CombatEncounter
 
 
-player = Player("Player", "Bob", "This is you", 10, 10, 5, 0, 1)
+player = Player("Player", "Bob", "This is you", 10, 10, 100, 1, 0, 1)
 player.location = rom.entry_gate
 player.inventory.add(wep.vorpal_blade, 1)
 
 
 class LootWindow(tk.Frame):
+    """The loot UI window"""
 
     def __init__(self, parent, container_obj):
         tk.Frame.__init__(self, parent)
@@ -54,6 +56,14 @@ class LootWindow(tk.Frame):
         self.update_inventories()
 
     def take_one(self, item):
+        """
+        Calls the loot method of the container to give 1 of
+        item to the player.  The Treeviews are then updated
+        as is the list of lootables drop down and the player's
+        inventory in the UI.
+
+        :param item: Name of the item being looted.
+        """
         item = self.container_inventory.item(item,"text")
         self.container_obj.loot(item, player)
         self.update_inventories()
@@ -69,6 +79,7 @@ class LootWindow(tk.Frame):
         if player.inventory:
             for item in player.inventory.inventory:
                 self.player_inventory.insert('', tk.END, text=item.item.name, values=item.quantity)
+
 
 class Main(tk.Tk):
     """Main program GUI."""
@@ -183,6 +194,11 @@ class Main(tk.Tk):
         self.update_lootables()
 
     def loot_container(self, container_name):
+        """
+        Opens the loot UI window.
+
+        :param container_name: Name of the container being looted
+        """
         self.container_obj = player.location.get_container_by_name(container_name)
         self.loot_window = tk.Toplevel(self)
         self.loot_window.title("Brightgate | Loot")
@@ -209,6 +225,12 @@ class Main(tk.Tk):
         self.lootables_combo.grid(column=1, row=1)
 
     def update_player_inventory(self):
+        """
+        Obtains a list of items (with quantities) in the player's
+        inventory.  The listbox representing the player's inventory
+        is removed from the GUI before being added back using the
+        updated list.
+        """
         player_inventory = [item for item in player.inventory.inventory]
         self.inventory_list.delete(0, END)
         for item in player_inventory:
@@ -253,16 +275,23 @@ class Main(tk.Tk):
         target_combo = tk.OptionMenu(self.action_frame, self.target_var, *targets)
         target_combo.grid(column=1, row=0)
 
-    def use_item(self, item_name, target):
+    def use_item(self, current_weapon, target):
         """
-        Allows the player to use an item from their inventory.
+        Initiate combat.
+
+        :param current_weapon: Name of weapon being used by player.
+        :param target: Target mob
         """
-        item = player.inventory.get_item_by_name(item_name)
+        allies = [player]
+        mobs = [mob for mob in player.location.mobs]
+        combatants = mobs + allies
         target = player.location.get_mob_by_name(target)
-        self.update_log(item.item.use(target, player))
-        self.update_targets()
-        self.update_lootables()
-        self.update_look()
+        combat = CombatEncounter(combatants, mobs, target, player)
+        for outcome in combat.combat():
+            self.update_log(outcome)
+            self.update_targets()
+            self.update_lootables()
+            self.update_look()
 
     def update_exits(self):
         """
